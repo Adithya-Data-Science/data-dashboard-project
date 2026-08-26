@@ -1,0 +1,40 @@
+{
+  "dataset": {
+    "raw_rows": 619040,
+    "raw_tickers": 505,
+    "panel_rows": 141333,
+    "panel_tickers": 120,
+    "start_date": "2013-05-10",
+    "end_date": "2018-01-31"
+  },
+  "split_rows": {
+    "train": 108693,
+    "validation": 15000,
+    "test": 17640
+  },
+  "selected_ridge_alpha": 1.0,
+  "validation": {
+    "split": "validation",
+    "rows": 15000,
+    "r2": -0.00937204666626923,
+    "mae": 0.02007398540484976,
+    "mean_daily_rank_ic": -0.060783551753016474,
+    "mean_5d_quintile_spread": -0.0036403861628812283,
+    "quintile_spread_positive_days": 0.376
+  },
+  "test": {
+    "split": "test",
+    "rows": 17640,
+    "r2": -0.015876968107455758,
+    "mae": 0.02367833032757393,
+    "mean_daily_rank_ic": -0.010837635459540468,
+    "mean_5d_quintile_spread": -0.00018352169138289863,
+    "quintile_spread_positive_days": 0.5102040816326531
+  },
+  "limitations": [
+    "Historical constituents create survivorship bias.",
+    "Prices are not explicitly adjusted for corporate actions.",
+    "The test window is short because the public dataset ends in 2018.",
+    "The quintile spread is diagnostic and excludes transaction costs."
+  ]
+}
