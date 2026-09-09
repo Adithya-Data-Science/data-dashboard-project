@@ -1,55 +1,65 @@
 # Methodology
 
-## Research question
+## Objective
 
-Can trailing price, volatility, volume, and intraday-range features provide
-cross-sectional information about U.S. equities' next five trading-day returns?
+Build a transparent fixed-income portfolio analytics workflow that compares baseline and optimized allocations across Treasury, TIPS, investment-grade, high-yield and broad bond exposures.
 
-## Data and universe
+## Universe
 
-The pipeline downloads the public `all_stocks_5yr.csv` dataset maintained in
-Plotly's datasets repository. It contains daily OHLCV observations for more
-than 500 historical S&P 500 names from 2013 through early 2018.
+The default investable universe is SHY, IEF, TLT, TIP, LQD, HYG and BND. These ETFs provide exposure to different duration, inflation and credit characteristics while keeping the project reproducible with public market data.
 
-To keep the project substantial but credible for an early-career portfolio,
-the analysis selects 120 equities by median dollar volume measured strictly
-before 2017. This prevents validation or test-period liquidity from determining
-the research universe.
+## Data preparation
 
-## Features and target
+Adjusted closing prices are downloaded at runtime with `yfinance`. Dates are sorted, duplicate observations are removed, assets are aligned, and daily prices are resampled to month-end. Monthly total returns are calculated from consecutive month-end prices.
 
-All features use information available on or before date *t*:
+## Capital-market inputs
 
-- 1-, 5-, 21-, and 63-day returns
-- 21- and 63-day realized volatility
-- 21-day standardized volume
-- intraday high-low range divided by closing price
+Historical monthly returns are used to estimate:
 
-The target is the close-to-close return from *t* through *t+5*. Rows lacking a
-complete lookback or forward target are removed.
+- annualized arithmetic mean returns
+- annualized covariance matrix
+- asset correlation matrix
 
-## Evaluation design
+These are backward-looking sample estimates and are not treated as forecasts.
 
-- Training: observations before January 1, 2017
-- Validation: January through June 2017
-- Test: July 2017 through the end of the dataset
+## Portfolio definitions
 
-Four Ridge penalties are compared only on validation-period mean daily rank
-correlation. The selected specification is then evaluated once on the untouched
-test period. Reported metrics are out-of-sample R-squared, MAE, mean daily
-Spearman rank correlation, and the average next-five-day return difference
-between predicted top and bottom quintiles.
+Three portfolios are constructed:
+
+1. **Equal weight** - transparent baseline with identical allocation to each exposure.
+2. **Minimum volatility** - minimizes `w' Sigma w` subject to weights summing to one, no shorting and a 35% maximum allocation per asset.
+3. **Maximum Sharpe** - maximizes `(w' mu - rf) / sqrt(w' Sigma w)` under the same constraints.
+
+Optimization uses SciPy SLSQP.
+
+## Evaluation
+
+Each portfolio is evaluated using:
+
+- annualized return
+- annualized volatility
+- Sharpe ratio
+- historical maximum drawdown
+- allocation weights
+- asset correlation matrix
+
+The same monthly return history is used to calculate historical drawdown for all portfolios.
+
+## Client analytics layer
+
+`app.py` reads the generated CSV outputs and provides a Streamlit interface for portfolio comparison, allocation weights, correlations and interpretation notes. The dashboard is deliberately descriptive and avoids presenting historical optimization as a recommendation.
 
 ## Reproducibility
 
-Run `python analysis.py` from the repository root. The script downloads the
-data, reconstructs every feature, selects the model, and writes machine-readable
-metrics, coefficients, and test predictions to `results/`.
+Run:
+
+```bash
+python portfolio_analytics.py --start 2012-01-01 --end 2026-01-01
+streamlit run app.py
+```
+
+The first command regenerates all analytical outputs from the requested market-data window. The second launches the client-facing analytics interface.
 
 ## Limitations
 
-This is an educational research project, not a live trading claim. The dataset
-uses a historical constituent list and therefore may contain survivorship bias.
-Prices are not explicitly adjusted for splits or dividends, the final test
-window is short, and the diagnostic quintile spread excludes turnover,
-transaction costs, capacity, and execution constraints.
+Historical means and covariances are unstable, ETF histories and exposures differ, transaction costs and taxes are omitted, and optimization can be sensitive to small changes in inputs. This is an educational quantitative-research demonstration using public data, not investment advice and not a representation of PIMCO proprietary methods.
